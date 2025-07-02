@@ -15,7 +15,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import frc.robot.Constants.ControllerConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.commands.ArcadeDriveCmd;
-import frc.robot.commands.lockCmd;
+import frc.robot.commands.LockCmd;
 import frc.robot.subsystems.SwerveSys;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Joystick;
@@ -59,7 +59,7 @@ public class RobotContainer {
 
         //Swerve locking system
         driverController.axisGreaterThan(XboxController.Axis.kLeftTrigger.value, ControllerConstants.triggerPressedThreshhold)
-            .whileTrue(new lockCmd(swerveSys));
+            .whileTrue(new LockCmd(swerveSys));
    }
 
   /**

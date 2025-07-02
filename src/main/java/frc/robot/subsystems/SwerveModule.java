@@ -49,6 +49,14 @@ public class SwerveModule extends SubsystemBase {
     private final SparkClosedLoopController steerController;
     private final SparkClosedLoopController driveController;
 
+    // Instanciate Spark Flex simulation
+    private final SparkFlexSim driveFlexSim;
+    private final SparkFlexSim steerFlexSim;
+
+    // Instanciate motor simulation
+    private final DCMotorSim driveSim;
+    private final DCMotorSim steerSim;
+
     public SwerveModule(int driveMtrId, int steerMtrId, int canCoderId, Rotation2d offset) {
 
         // Create Motors
@@ -99,6 +107,49 @@ public class SwerveModule extends SubsystemBase {
 
         // Initializes the steer encoder position to the CANCoder position, accounting for offset.
         steerEnc.setPosition(getCanCoderAngle().getRadians());
+
+        // Initialize Spark Flex simulation
+        driveFlexSim = new SparkFlexSim(driveMtr, DCMotor.getNeoVortex(1));
+        steerFlexSim = new SparkFlexSim(steerMtr, DCMotor.getNeoVortex(1));
+
+        // Initalize motor simulation
+        DCMotor gearbox = DCMotor.getNeoVortex(1);
+        double momentOfInertia = 0.00032; // Moment of inertia in kg x m^2
+        LinearSystem<N2, N1, N2> dcMotorPlantDrive =
+            LinearSystemId.createDCMotorSystem(
+                DriveConstants.kvVoltSecsPerMeter,
+                DriveConstants.kaVoltSecsPerMeterSq);
+
+        LinearSystem<N2, N1, N2> dcMotorPlantSteer = LinearSystemId.createDCMotorSystem(
+            gearbox, 0.004, 1/DriveConstants.steerMtrGearReduction
+        );
+
+        steerSim = new DCMotorSim(dcMotorPlantSteer, gearbox);
+        driveSim = new DCMotorSim(dcMotorPlantDrive, gearbox);
+    }
+
+    @Override
+    public void periodic() {
+        // Set Inputs
+        steerSim.setInputVoltage(steerFlexSim.getAppliedOutput() * 12.0);
+        driveSim.setInputVoltage(driveFlexSim.getAppliedOutput() * 12.0);
+
+        // Update sims
+        driveSim.update(0.02);
+        steerSim.update(0.02);
+
+        steerFlexSim.iterate(
+            Units.radiansPerSecondToRotationsPerMinute(steerSim.getAngularVelocityRadPerSec()), 12, 0.02
+        );
+
+        driveFlexSim.iterate(
+            Units.radiansPerSecondToRotationsPerMinute(driveSim.getAngularVelocityRadPerSec()), 12, 0.02
+        );
+
+        canCoder.getSimState().setRawPosition(steerSim.getAngularPositionRotations());
+
+        SmartDashboard.putNumber("driveMotor/id" + driveMtr.getDeviceId() + "/simPos", driveSim.getAngularPositionRad());
+        SmartDashboard.putNumber("steerMotor/id" + steerMtr.getDeviceId() + "/simPos", steerSim.getAngularPositionRad());
     }
 
     /**

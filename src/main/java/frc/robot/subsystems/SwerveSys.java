@@ -187,8 +187,37 @@ public class SwerveSys extends SubsystemBase {
     );
   }
 
+  // Send simulation output to NetworkTables
+  StructPublisher<Pose2d> publisher = NetworkTableInstance.getDefault()
+    .getStructTopic("MyPose", Pose2d.struct).publish();
+  StructArrayPublisher<Pose2d> arrayPublisher = NetworkTableInstance.getDefault()
+    .getStructArrayTopic("MyPoseArray", Pose2d.struct).publish();
+
+  StructArrayPublisher<SwerveModuleState> measuredStatePublisher = NetworkTableInstance.getDefault()
+    .getStructArrayTopic("StatesMeasured", SwerveModuleState.struct).publish();
+
   @Override
   public void periodic() {
+
+    // Periodicaly send simulated pose and module states to NetworkTables
+
+    SwerveModuleState[] measuredStates = new SwerveModuleState[] {
+      new SwerveModuleState(frontLeftMod.getVelocityMetersPerSec(), frontLeftMod.getSteerEncAngle()),
+      new SwerveModuleState(frontRightMod.getVelocityMetersPerSec(), frontRightMod.getSteerEncAngle()),
+      new SwerveModuleState(backLeftMod.getVelocityMetersPerSec(), backLeftMod.getSteerEncAngle()),
+      new SwerveModuleState(backRightMod.getVelocityMetersPerSec(), backRightMod.getSteerEncAngle())
+    };
+
+    Pose2d poseA = new Pose2d();
+    Pose2d poseB = new Pose2d();
+
+    poseA = getPose();
+    poseB = getPose();
+
+    measuredStatePublisher.set(measuredStates);
+    publisher.set(poseA);
+    arrayPublisher.set(new Pose2d[] {poseA, poseB});
+
     // This method will be called once per scheduler run
 
     poseEstimator.update(imu.getRotation2d(), getModulePositions());
