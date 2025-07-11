@@ -106,7 +106,7 @@ public class SwerveModule extends SubsystemBase {
         canCoder.getConfigurator().apply(ccConfig);
 
         // Initializes the steer encoder position to the CANCoder position, accounting for offset.
-        steerEnc.setPosition(getCanCoderAngle().getRadians());
+        steerEnc.setPosition(getCanCoderAngle().getRadians() - offset.getRadians());
 
         // Initialize Spark Flex simulation
         driveFlexSim = new SparkFlexSim(driveMtr, DCMotor.getNeoVortex(1));
@@ -117,11 +117,11 @@ public class SwerveModule extends SubsystemBase {
         double momentOfInertia = 0.00032; // Moment of inertia in kg x m^2
         LinearSystem<N2, N1, N2> dcMotorPlantDrive =
             LinearSystemId.createDCMotorSystem(
-                DriveConstants.kvVoltSecsPerMeter,
-                DriveConstants.kaVoltSecsPerMeterSq);
+                DriveConstants.kvVoltsSecsPerRad,
+                DriveConstants.kaVoltSecsPerRadSq);
 
         LinearSystem<N2, N1, N2> dcMotorPlantSteer = LinearSystemId.createDCMotorSystem(
-            gearbox, 0.004, 1/DriveConstants.steerMtrGearReduction
+            DCMotor.getNeoVortex(1), 0.004, 1/DriveConstants.steerMtrGearReduction
         );
 
         steerSim = new DCMotorSim(dcMotorPlantSteer, gearbox);
@@ -147,6 +147,12 @@ public class SwerveModule extends SubsystemBase {
         );
 
         canCoder.getSimState().setRawPosition(steerSim.getAngularPositionRotations());
+
+        double steerSimPose = steerSim.getAngularPositionRotations() / DriveConstants.steerMtrGearReduction;
+        double driveSimVelocity = driveSim.getAngularVelocityRadPerSec() / DriveConstants.driveMtrGearReduction;
+
+        steerFlexSim.setPosition(steerSimPose);
+        driveFlexSim.setVelocity(driveSimVelocity);
 
         SmartDashboard.putNumber("driveMotor/id" + driveMtr.getDeviceId() + "/simPos", driveSim.getAngularPositionRad());
         SmartDashboard.putNumber("steerMotor/id" + steerMtr.getDeviceId() + "/simPos", steerSim.getAngularPositionRad());
@@ -197,8 +203,9 @@ public class SwerveModule extends SubsystemBase {
      * @return The current absolute angle of the module.
      */
     public Rotation2d getSteerEncAngle() {
-        return new Rotation2d(steerEnc.getPosition());
+        return new Rotation2d(canCoder.getAbsolutePosition().getValueAsDouble() * 2.0 * Math.PI);
     }
+
 
     /**
      * Returns the current velocity of the module from the drive motor encoder.
@@ -241,18 +248,16 @@ public class SwerveModule extends SubsystemBase {
      */
     public void setDesiredState(SwerveModuleState desiredState, boolean isClosedLoop) {
 
-        // Calculate the current angle of the module
-        double currentAngle = getSteerEncAngle().getRadians();
-
-        // Optimize the desired state to the current angle
-        double optimizedAngle = calculatedAdjustedAngle(desiredState.angle.getRadians(), currentAngle);
-
         // Upadte the desired state with the optimized angle
-        desiredState = new SwerveModuleState(desiredState.speedMetersPerSecond, new Rotation2d(optimizedAngle));
+        desiredState = SwerveModuleState.optimize(desiredState, getSteerEncAngle());
 
         // Scale velocity based on turn error to help prevent skew.
         double angleErrorRad = desiredState.angle.getRadians() - getSteerEncAngle().getRadians();
         desiredState.speedMetersPerSecond *= Math.cos(angleErrorRad);
+
+        // Log values for debugging
+        System.out.println("Raw Encoder Value: " + canCoder.getAbsolutePosition().getValueAsDouble());
+        System.out.println("Steer Encoder Angle: " + getSteerEncAngle().getRadians());
 
         steerController.setReference(
             calculatedAdjustedAngle(

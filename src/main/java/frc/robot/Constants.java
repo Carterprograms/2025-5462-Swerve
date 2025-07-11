@@ -102,7 +102,7 @@ public class Constants {
          * 
          */
         // This is the gear ratio for L3 modules.
-        public static final double driveMtrGearReduction = 5.36;
+        public static final double driveMtrGearReduction = (16.0 / 50.0) * (28.0 / 16.0) * (15.0 / 45.0);
 
         /**
          * The gear reduction from the steer motor to the wheel.
@@ -155,6 +155,12 @@ public class Constants {
         public static final double ksVolts = 0.667;
         public static final double kvVoltSecsPerMeter = 0.3622;
         public static final double kaVoltSecsPerMeterSq = 0.0259;
+
+        public static final double kvVoltsSecsPerRot = (0.1016 * Math.PI) * kvVoltSecsPerMeter;
+        public static final double kaVoltSecsPerRotSq = (0.1016 * Math.PI) * kaVoltSecsPerMeterSq;
+
+        public static final double kvVoltsSecsPerRad = kvVoltsSecsPerRot / (2 * Math.PI);
+        public static final double kaVoltSecsPerRadSq = kaVoltSecsPerRotSq / (2 * Math.PI);
 
         public static final SimpleMotorFeedforward driveFF =
             new SimpleMotorFeedforward(ksVolts, kvVoltSecsPerMeter, kaVoltSecsPerMeterSq);

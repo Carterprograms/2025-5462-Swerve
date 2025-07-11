@@ -196,6 +196,9 @@ public class SwerveSys extends SubsystemBase {
   StructArrayPublisher<SwerveModuleState> measuredStatePublisher = NetworkTableInstance.getDefault()
     .getStructArrayTopic("StatesMeasured", SwerveModuleState.struct).publish();
 
+  StructArrayPublisher<SwerveModuleState> targetStatePublisher = NetworkTableInstance.getDefault()
+    .getStructArrayTopic("StatesTarget", SwerveModuleState.struct).publish();
+
   @Override
   public void periodic() {
 
@@ -316,6 +319,7 @@ public class SwerveSys extends SubsystemBase {
    * @param moduleStates An array module states to set. The order is FL, FR, BL, BR.
    */
   public void setModuleStates(SwerveModuleState[] moduleStates) {
+    targetStatePublisher.set(moduleStates);
     frontLeftMod.setDesiredState(moduleStates[0], false);
     frontRightMod.setDesiredState(moduleStates[1], false);
     backLeftMod.setDesiredState(moduleStates[2], false);
