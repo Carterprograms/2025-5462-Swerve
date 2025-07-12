@@ -167,8 +167,8 @@ public class SwerveSys extends SubsystemBase {
       this::getChassisSpeeds,
       (speeds, feedforwards) -> setChassisSpeeds(speeds), // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionall outputs indiviual module feedforwards
       new PPHolonomicDriveController(
-        new PIDConstants(0, 0.0, 0.0), // Translation PID constants
-        new PIDConstants(0, 0.0, 0.0) // Rotation PID constants
+        new PIDConstants(0.1, 0.0, 0.0), // Translation PID constants
+        new PIDConstants(0.1, 0.0, 0.0) // Rotation PID constants
       ),
       config, // PathPlanner robot configuration
       () -> {
