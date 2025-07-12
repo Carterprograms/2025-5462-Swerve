@@ -153,8 +153,8 @@ public class Constants {
         public static final double steerkD = 0.27186;
 
         public static final double ksVolts = 0.667;
-        public static final double kvVoltSecsPerMeter = 0.3622;
-        public static final double kaVoltSecsPerMeterSq = 0.0259;
+        public static final double kvVoltSecsPerMeter = 1.78; //0.3622 // 1.714
+        public static final double kaVoltSecsPerMeterSq = 0.55;
 
         public static final double kvVoltsSecsPerRot = (0.1016 * Math.PI) * kvVoltSecsPerMeter;
         public static final double kaVoltSecsPerRotSq = (0.1016 * Math.PI) * kaVoltSecsPerMeterSq;
