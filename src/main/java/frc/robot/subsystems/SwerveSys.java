@@ -225,12 +225,12 @@ public class SwerveSys extends SubsystemBase {
 
     poseEstimator.update(imu.getRotation2d(), getModulePositions());
 
-    for(LimelightPoseEstimator limelightPoseEstimator : limelightPoseEstimators) {
+   /*  for(LimelightPoseEstimator limelightPoseEstimator : limelightPoseEstimators) {
       Optional<Pose2d> limelightPose = limelightPoseEstimator.getRobotPose();
       if(limelightPose.isPresent()) {
         poseEstimator.addVisionMeasurement(limelightPose.get(), limelightPoseEstimator.getCaptureTimestamp());
       }
-    }
+    }*/
   }
 
   /**
