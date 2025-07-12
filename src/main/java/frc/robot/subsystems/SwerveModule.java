@@ -140,15 +140,13 @@ public class SwerveModule extends SubsystemBase {
 
         steerFlexSim.iterate(steerSim.getAngularVelocityRadPerSec(), 12, 0.02);
 
-        driveFlexSim.iterate(
-            Units.radiansPerSecondToRotationsPerMinute(driveSim.getAngularVelocityRadPerSec()), 12, 0.02
-        );
+        driveFlexSim.iterate(Units.radiansPerSecondToRotationsPerMinute(driveSim.getAngularVelocityRadPerSec()), 12, 0.02);
 
         canCoder.getSimState().setRawPosition(steerSim.getAngularPositionRotations());
 
         double steerSimPose = steerSim.getAngularPositionRad();
-        double driveSimVelocity = driveSim.getAngularVelocityRadPerSec() / DriveConstants.driveMtrGearReduction;
-        double driveSimPose = driveSim.getAngularPositionRad() / DriveConstants.driveMetersPerEncRev;
+        double driveSimVelocity = (driveSim.getAngularVelocityRPM() / 60) * DriveConstants.wheelCircumferenceMeters;
+        double driveSimPose = driveSim.getAngularPositionRotations() * DriveConstants.wheelCircumferenceMeters;
 
         steerFlexSim.setPosition(steerSimPose);
         driveFlexSim.setVelocity(driveSimVelocity);
