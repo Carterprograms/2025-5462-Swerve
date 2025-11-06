@@ -6,7 +6,7 @@ import frc.robot.subsystems.SwerveSys;
 public class LockCmd extends Command {
 
     private final SwerveSys swerveSys;
-
+    
     /**
      * Constructs a new LockCmd.
      * 

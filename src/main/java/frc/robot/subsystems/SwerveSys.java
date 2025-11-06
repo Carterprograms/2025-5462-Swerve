@@ -1,14 +1,14 @@
 package frc.robot.subsystems;
 
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
 import java.util.Optional;
 import com.ctre.phoenix6.hardware.Pigeon2;
+import com.ctre.phoenix6.sim.Pigeon2SimState;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -19,23 +19,16 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.simulation.DCMotorSim;
-import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import frc.robot.Constants.CANDevices;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.util.limelight.LimelightPoseEstimator;
-import edu.wpi.first.math.system.LinearSystem;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.system.plant.LinearSystemId;
 
 public class SwerveSys extends SubsystemBase {
   /** Creates a new ExampleSubsystem. */
@@ -139,6 +132,15 @@ public class SwerveSys extends SubsystemBase {
    * <p>SwerveCmd contains 4 {@link SwerveModule}, a gyro, and methods to control the drive base and odometry.
    */
   public SwerveSys() {
+
+    // Gets the robots configuration from Path Planner
+    try{
+      config = RobotConfig.fromGUISettings();
+    } catch (Exception e) {
+      // Handle exception as needed
+      e.printStackTrace();
+    }
+
     // Resets the measured distance driven for each module
     frontLeftMod.resetDriveDistance();
     frontRightMod.resetDriveDistance();
@@ -152,23 +154,15 @@ public class SwerveSys extends SubsystemBase {
     System.out.println(backLeftMod.getSteerEncAngle());
     System.out.println(backRightMod.getSteerEncAngle());
 
-    // Gets the robots configuration from Path Planner
-    try{
-      config = RobotConfig.fromGUISettings();
-    } catch (Exception e) {
-      // Handle exception as needed
-      e.printStackTrace();
-    }
-
     // Configure AutoBuilder last
     AutoBuilder.configure(
-      this::getBlueSidePose, // Robot pose supplier
+      this::getPose, // Robot pose supplier
       this::resetPPPose, // Method to reset odometry (will be called if your auto has a starting pose)
       this::getChassisSpeeds,
       (speeds, feedforwards) -> setChassisSpeeds(speeds), // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionall outputs indiviual module feedforwards
       new PPHolonomicDriveController(
-        new PIDConstants(0.1, 0.0, 0.0), // Translation PID constants
-        new PIDConstants(0.1, 0.0, 0.0) // Rotation PID constants
+        new PIDConstants(1, 1, 1), // Translation PID constants
+        new PIDConstants(1, 1, 1) // Rotation PID constants
       ),
       config, // PathPlanner robot configuration
       () -> {
@@ -214,7 +208,7 @@ public class SwerveSys extends SubsystemBase {
     Pose2d poseA = new Pose2d();
     Pose2d poseB = new Pose2d();
 
-    poseA = getPose();
+    poseA = new Pose2d(0.0, 0.0, imu.getRotation2d());
     poseB = getPose();
 
     measuredStatePublisher.set(measuredStates);
@@ -225,13 +219,28 @@ public class SwerveSys extends SubsystemBase {
 
     poseEstimator.update(imu.getRotation2d(), getModulePositions());
 
-   /*  for(LimelightPoseEstimator limelightPoseEstimator : limelightPoseEstimators) {
+      for(LimelightPoseEstimator limelightPoseEstimator : limelightPoseEstimators) {
       Optional<Pose2d> limelightPose = limelightPoseEstimator.getRobotPose();
       if(limelightPose.isPresent()) {
         poseEstimator.addVisionMeasurement(limelightPose.get(), limelightPoseEstimator.getCaptureTimestamp());
       }
-    }*/
+    }
+
+    System.out.println("Pose" + getPose());
+    System.out.println("IMU Heading: " + imu.getRotation2d().getDegrees());
   }
+
+
+
+  /**
+   * Gets the current position of the robot durring a simulation.
+   * 
+   * @return The current position of the robot as a Pose2d.
+   */
+  public Pigeon2SimState getSimulatedState() {
+    return imu.getSimState();
+  }
+
 
   /**
    * Inputs drive values into the swerve drive base.
@@ -241,7 +250,7 @@ public class SwerveSys extends SubsystemBase {
    * @param rotationRadPerSec the desired rotational motion, in radians per second.
    * @param isFieldOriented whether driving is field or robot-oriented.
    */
-  public void drive(double driveXMetersPerSec, double driveYMetersPerSec, double rotationRadPerSec, boolean isFiledOriented) {
+  public void drive(double driveXMetersPerSec, double driveYMetersPerSec, double rotationRadPerSec, boolean isFieldOriented) {
     if(omegaOverrideRadPerSec.isPresent()) {
       rotationRadPerSec = omegaOverrideRadPerSec.get();
     }
@@ -269,7 +278,7 @@ public class SwerveSys extends SubsystemBase {
 
       // Represents the overall state of the drive base.
       ChassisSpeeds speeds =
-        isFiledOriented
+        isFieldOriented
           ? ChassisSpeeds.fromFieldRelativeSpeeds(
             driveXMetersPerSec, driveYMetersPerSec, rotationRadPerSec, getHeading())
           : new ChassisSpeeds(driveXMetersPerSec, driveYMetersPerSec, rotationRadPerSec);
@@ -394,7 +403,11 @@ public class SwerveSys extends SubsystemBase {
    * @return The current estimated position of the robot.
    */
   public Pose2d getPose() {
-    return poseEstimator.getEstimatedPosition();
+    return new Pose2d(
+      poseEstimator.getEstimatedPosition().getX(),
+      poseEstimator.getEstimatedPosition().getY(),
+      poseEstimator.getEstimatedPosition().getRotation()
+    );
   }
 
   /**

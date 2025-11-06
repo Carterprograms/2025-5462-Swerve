@@ -1,14 +1,10 @@
 package frc.robot;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.JoystickButton;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -17,11 +13,8 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.commands.ArcadeDriveCmd;
 import frc.robot.commands.LockCmd;
 import frc.robot.subsystems.SwerveSys;
-import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.Joystick;
 
 import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.auto.NamedCommands;
 
 public class RobotContainer {
   // The robot's subsystems and commands are defined here...
@@ -31,16 +24,15 @@ public class RobotContainer {
   private final CommandXboxController driverController = new CommandXboxController(ControllerConstants.driverGamepadPort);
 
   // Initalize auto selector
-  SendableChooser<Command> autoSelector = new SendableChooser<Command>();
+  private final SendableChooser<Command> autoChooser;
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
-
     RobotController.setBrownoutVoltage(DriveConstants.brownoutVoltage);
 
-    autoSelector = AutoBuilder.buildAutoChooser();
+    autoChooser = AutoBuilder.buildAutoChooser();
 
-    SmartDashboard.putData("Auto Selector", autoSelector);
+    SmartDashboard.putData("Auto Selector", autoChooser);
 
     // Configure the trigger bindings
     configDriverBindings();
@@ -69,7 +61,7 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
-    return autoSelector.getSelected();
+    return autoChooser.getSelected();
   }
 
    // For uniformity, any information sent to Shuffleboard/SmartDashboard should go here.

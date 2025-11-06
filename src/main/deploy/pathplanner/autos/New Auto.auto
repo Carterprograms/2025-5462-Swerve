@@ -7,13 +7,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Middle Path 1"
+            "pathName": "1"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Middle Path 2"
+            "pathName": "2"
           }
         }
       ]

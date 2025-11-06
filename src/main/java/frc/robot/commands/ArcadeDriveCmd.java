@@ -1,6 +1,5 @@
 package frc.robot.commands;
 
-import java.util.Optional;
 import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.wpilibj.DriverStation;
@@ -8,8 +7,6 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.SwerveSys;
-import frc.robot.util.limelight.LimelightPoseEstimator;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 public class ArcadeDriveCmd extends Command {
 
