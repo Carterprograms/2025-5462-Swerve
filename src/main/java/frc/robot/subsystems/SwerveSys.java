@@ -109,17 +109,16 @@ public class SwerveSys extends SubsystemBase {
 
   private final SwerveDrivePoseEstimator poseEstimator =
     new SwerveDrivePoseEstimator(
-      DriveConstants.kinematics,
-      imu.getRotation2d(),
-      getModulePositions(),
-      new Pose2d(),
-      VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(0.25)),
-      VecBuilder.fill(0.35,0.35, Units.degreesToRadians(35.0))
+      DriveConstants.kinematics, // Kinematics model for the swerve drive
+      imu.getRotation2d(),       // Initial heading from the IMU
+      getModulePositions(),      // Initial positions of the swerve modules
+      getPose(),                 // Initial pose of the robot
+      VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(0.25)),  // Measured State standard deviations
+      VecBuilder.fill(0.35,0.35, Units.degreesToRadians(35.0))   // Measured Vision standard deviations
     );
 
   private final LimelightPoseEstimator[] limelightPoseEstimators = new LimelightPoseEstimator[] {
-    new LimelightPoseEstimator(VisionConstants.frontLimelightName),
-    new LimelightPoseEstimator(VisionConstants.backLimelightName)
+    new LimelightPoseEstimator(VisionConstants.limeLightName)
   };
 
   public void resetPPPose(Pose2d pose) {

@@ -12,6 +12,7 @@ import frc.robot.Constants.ControllerConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.commands.ArcadeDriveCmd;
 import frc.robot.commands.LockCmd;
+import frc.robot.commands.PointCmd;
 import frc.robot.subsystems.SwerveSys;
 
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -52,6 +53,8 @@ public class RobotContainer {
         //Swerve locking system
         driverController.axisGreaterThan(XboxController.Axis.kLeftTrigger.value, ControllerConstants.triggerPressedThreshhold)
             .whileTrue(new LockCmd(swerveSys));
+
+        driverController.a().whileTrue(new PointCmd(swerveSys));
    }
 
   /**
